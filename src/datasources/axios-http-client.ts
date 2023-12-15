@@ -1,6 +1,6 @@
-import axios, { Axios } from "axios";
-import * as http from "http";
-import * as https from "https";
+import axios, { Axios } from 'axios';
+import * as http from 'http';
+import * as https from 'https';
 
 const REQUEST_TIMEOUT_MS: number = 30_000;
 
