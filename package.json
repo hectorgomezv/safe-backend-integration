@@ -25,6 +25,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "dotenv": "^16.3.1",
     "viem": "^1.20.0"
   }
 }

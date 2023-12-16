@@ -1,4 +1,5 @@
-import { Block, createPublicClient, http } from 'viem';
+import { configuration } from '@/config/configuration';
+import { Block, createPublicClient, http, parseGwei } from 'viem';
 import { sepolia } from 'viem/chains';
 
 describe('Blockchain read-only', () => {
@@ -16,5 +17,12 @@ describe('Blockchain read-only', () => {
       timestamp: expect.any(BigInt),
       transactions: expect.arrayContaining([]),
     });
+  });
+
+  it('should get the account balance', async () => {
+    const balance = await client.getBalance({
+      address: configuration.walletAddress,
+    });
+    expect(balance).toBeGreaterThan(parseGwei(`${10_000_000}`)); // 0.01 ETH
   });
 });
