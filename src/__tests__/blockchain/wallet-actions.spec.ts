@@ -4,15 +4,29 @@ import { sepolia } from 'viem/chains';
 import { configuration } from '@/config/configuration';
 
 describe('Wallet actions', () => {
-  const account = privateKeyToAccount(configuration.privateKey);
-  const client = createWalletClient({
-    account,
-    chain: sepolia,
-    transport: http(),
-  });
+  const [firstWalletClient, secondWalletClient, thirdWalletClient] =
+    configuration.privateKeys.map((pk) =>
+      createWalletClient({
+        account: privateKeyToAccount(pk),
+        chain: sepolia,
+        transport: http(),
+      }),
+    );
 
-  it('should get the account addresses', async () => {
-    const accounts = await client.getAddresses();
-    expect(accounts).toEqual([configuration.walletAddress]);
+  describe('should get the account addresses', () => {
+    it('should get the first account address', async () => {
+      const [account] = await firstWalletClient.getAddresses();
+      expect(account).toEqual(configuration.walletAddresses[0]);
+    });
+
+    it('should get the second account address', async () => {
+      const [account] = await secondWalletClient.getAddresses();
+      expect(account).toEqual(configuration.walletAddresses[1]);
+    });
+
+    it('should get the third account address', async () => {
+      const [account] = await thirdWalletClient.getAddresses();
+      expect(account).toEqual(configuration.walletAddresses[2]);
+    });
   });
 });

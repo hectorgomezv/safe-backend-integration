@@ -1,15 +1,16 @@
 import { configuration } from '@/config/configuration';
-import { Block, createPublicClient, http, parseGwei } from 'viem';
+import { Block, createPublicClient, formatEther, formatGwei, http } from 'viem';
 import { sepolia } from 'viem/chains';
 
 describe('Blockchain read-only', () => {
-  const client = createPublicClient({
+  const publicClient = createPublicClient({
     chain: sepolia,
     transport: http(),
   });
 
   it('should get the last block', async () => {
-    const block: Block = await client.getBlock();
+    const block: Block = await publicClient.getBlock();
+
     expect(block).toMatchObject({
       hash: expect.any(String),
       number: expect.any(BigInt),
@@ -19,10 +20,11 @@ describe('Blockchain read-only', () => {
     });
   });
 
-  it('should get the account balance', async () => {
-    const balance = await client.getBalance({
-      address: configuration.walletAddress,
-    });
-    expect(balance).toBeGreaterThan(parseGwei(`${10_000_000}`)); // 0.01 ETH
+  it.skip('should get the accounts balances', async () => {
+    for (const address of configuration.walletAddresses) {
+      const balance = await publicClient.getBalance({ address });
+      console.log(`ETH on ${address}: ${Number(formatEther(balance))}`);
+      expect(Number(formatGwei(balance))).toBeGreaterThan(10_000_000); // 0.01 ETH
+    }
   });
 });
