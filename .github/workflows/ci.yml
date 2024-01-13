@@ -34,10 +34,10 @@ jobs:
     env:
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
       WALLET_ADDRESS: ${{ secrets.WALLET_ADDRESS }}
-      SECOND_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-      SECOND_WALLET_ADDRESS: ${{ secrets.WALLET_ADDRESS }}
-      THIRD_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-      THIRD_WALLET_ADDRESS: ${{ secrets.WALLET_ADDRESS }}
+      SECOND_PRIVATE_KEY: ${{ secrets.SECOND_PRIVATE_KEY }}
+      SECOND_WALLET_ADDRESS: ${{ secrets.SECOND_WALLET_ADDRESS }}
+      THIRD_PRIVATE_KEY: ${{ secrets.THIRD_PRIVATE_KEY }}
+      THIRD_WALLET_ADDRESS: ${{ secrets.THIRD_WALLET_ADDRESS }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
