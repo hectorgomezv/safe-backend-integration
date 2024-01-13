@@ -1,30 +1,30 @@
 import { configuration } from '@/config/configuration';
-import { Block, createPublicClient, formatEther, formatGwei, http } from 'viem';
-import { sepolia } from 'viem/chains';
+import { Block, ethers, formatEther, parseUnits } from 'ethers';
 
 describe('Blockchain read-only', () => {
-  const publicClient = createPublicClient({
-    chain: sepolia,
-    transport: http(),
-  });
+  const provider = new ethers.InfuraProvider(
+    'sepolia',
+    process.env.INFURA_API_KEY,
+  );
 
   it('should get the last block', async () => {
-    const block: Block = await publicClient.getBlock();
+    const block: Block | null = await provider.getBlock('latest');
 
     expect(block).toMatchObject({
       hash: expect.any(String),
-      number: expect.any(BigInt),
-      size: expect.any(BigInt),
-      timestamp: expect.any(BigInt),
+      number: expect.any(Number),
+      timestamp: expect.any(Number),
       transactions: expect.arrayContaining([]),
     });
   });
 
   it.skip('should get the accounts balances', async () => {
     for (const address of configuration.walletAddresses) {
-      const balance = await publicClient.getBalance({ address });
+      const balance = await provider.getBalance(address);
       console.log(`ETH on ${address}: ${Number(formatEther(balance))}`);
-      expect(Number(formatGwei(balance))).toBeGreaterThan(10_000_000); // 0.01 ETH
+      expect(Number(parseUnits(formatEther(balance), 'gwei'))).toBeGreaterThan(
+        10_000_000,
+      ); // 0.01 ETH
     }
   });
 });
