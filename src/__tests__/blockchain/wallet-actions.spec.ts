@@ -1,5 +1,5 @@
-import { InfuraProvider, JsonRpcApiProvider, Wallet, ethers } from 'ethers';
 import { configuration } from '@/config/configuration';
+import { InfuraProvider, JsonRpcApiProvider, Wallet, ethers } from 'ethers';
 
 const REFILL_THRESHOLD = 1000000000000000; // 0.001 ETH
 

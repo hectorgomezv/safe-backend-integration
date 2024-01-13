@@ -1,5 +1,4 @@
-import { configuration } from '@/config/configuration';
-import { Block, ethers, formatEther, parseUnits } from 'ethers';
+import { Block, ethers } from 'ethers';
 
 describe('Blockchain read-only', () => {
   const provider = new ethers.InfuraProvider(
