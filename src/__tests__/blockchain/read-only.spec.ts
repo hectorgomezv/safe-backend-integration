@@ -17,14 +17,4 @@ describe('Blockchain read-only', () => {
       transactions: expect.arrayContaining([]),
     });
   });
-
-  it.skip('should get the accounts balances', async () => {
-    for (const address of configuration.walletAddresses) {
-      const balance = await provider.getBalance(address);
-      console.log(`ETH on ${address}: ${Number(formatEther(balance))}`);
-      expect(Number(parseUnits(formatEther(balance), 'gwei'))).toBeGreaterThan(
-        10_000_000,
-      ); // 0.01 ETH
-    }
-  });
 });
