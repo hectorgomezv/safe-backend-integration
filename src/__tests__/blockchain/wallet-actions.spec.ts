@@ -1,4 +1,4 @@
-import { JsonRpcApiProvider, JsonRpcProvider, Wallet, ethers } from 'ethers';
+import { InfuraProvider, JsonRpcApiProvider, Wallet, ethers } from 'ethers';
 import { configuration } from '@/config/configuration';
 
 const REFILL_THRESHOLD = 1000000000000000; // 0.001 ETH
@@ -20,7 +20,7 @@ const getFundedWallet = async (
 };
 
 describe('Wallet actions', () => {
-  const provider = new JsonRpcProvider(process.env.RPC_URI, 'sepolia');
+  const provider = new InfuraProvider('sepolia', process.env.INFURA_API_KEY);
   const wallets = configuration.privateKeys.map(
     (pk) => new Wallet(pk, provider),
   );

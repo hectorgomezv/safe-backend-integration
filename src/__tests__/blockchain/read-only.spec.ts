@@ -2,7 +2,10 @@ import { configuration } from '@/config/configuration';
 import { Block, ethers, formatEther, parseUnits } from 'ethers';
 
 describe('Blockchain read-only', () => {
-  const provider = new ethers.JsonRpcProvider(process.env.RPC_URI, 'sepolia');
+  const provider = new ethers.InfuraProvider(
+    'sepolia',
+    process.env.INFURA_API_KEY,
+  );
 
   it('should get the last block', async () => {
     const block: Block | null = await provider.getBlock('latest');
