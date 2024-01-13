@@ -1,5 +1,4 @@
-import { configuration } from '@/config/configuration';
-import { Block, ethers, formatEther, parseUnits } from 'ethers';
+import { Block, ethers } from 'ethers';
 
 describe('Blockchain read-only', () => {
   const provider = new ethers.InfuraProvider(
@@ -16,15 +15,5 @@ describe('Blockchain read-only', () => {
       timestamp: expect.any(Number),
       transactions: expect.arrayContaining([]),
     });
-  });
-
-  it.skip('should get the accounts balances', async () => {
-    for (const address of configuration.walletAddresses) {
-      const balance = await provider.getBalance(address);
-      console.log(`ETH on ${address}: ${Number(formatEther(balance))}`);
-      expect(Number(parseUnits(formatEther(balance), 'gwei'))).toBeGreaterThan(
-        10_000_000,
-      ); // 0.01 ETH
-    }
   });
 });

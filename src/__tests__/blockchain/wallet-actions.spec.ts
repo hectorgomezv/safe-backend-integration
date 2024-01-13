@@ -1,5 +1,5 @@
-import { InfuraProvider, JsonRpcApiProvider, Wallet, ethers } from 'ethers';
 import { configuration } from '@/config/configuration';
+import { InfuraProvider, JsonRpcApiProvider, Wallet, ethers } from 'ethers';
 
 const REFILL_THRESHOLD = 1000000000000000; // 0.001 ETH
 
@@ -41,21 +41,6 @@ describe('Wallet actions', () => {
   });
 
   describe('resources allocation', () => {
-    it('should get the balances', async () => {
-      console.log(wallets[0].address.slice(2));
-      console.log(wallets[1].address.slice(2));
-      console.log(wallets[2].address.slice(2));
-      console.log(configuration.walletAddresses.map((w) => w.slice(2)));
-      console.log(process.env.WALLET_ADDRESS?.slice(2));
-      console.log(process.env.SECOND_WALLET_ADDRESS?.slice(2));
-      console.log(process.env.THIRD_WALLET_ADDRESS?.slice(2));
-      for (const wallet of wallets) {
-        const ethBalance = await provider.getBalance(wallet.address);
-        expect(ethBalance).toBeDefined();
-        console.log(`${wallet.address.slice(2)} balance: ${ethBalance}`);
-      }
-    });
-
     it('should refill a wallet that is almost empty', async () => {
       for (const wallet of wallets) {
         const ethBalance = await provider.getBalance(wallet.address);

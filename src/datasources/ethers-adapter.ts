@@ -1,5 +1,5 @@
-import { ethers } from 'ethers';
 import { EthersAdapter } from '@safe-global/protocol-kit';
+import { ethers } from 'ethers';
 
 export const getEthersAdapter = async (): Promise<EthersAdapter> => {
   const provider = new ethers.InfuraProvider(
