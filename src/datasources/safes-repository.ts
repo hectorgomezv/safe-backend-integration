@@ -3,33 +3,65 @@ import Safe, {
   SafeAccountConfig,
   SafeFactory,
 } from '@safe-global/protocol-kit';
+import { Provider, Wallet, ethers } from 'ethers';
+import { configuration } from '@/config/configuration';
+
+const { privateKeys } = configuration;
+const { INFURA_API_KEY } = process.env;
 
 export class SafesRepository {
-  private ethersAdapter: EthersAdapter;
+  private readonly provider: Provider;
+  private readonly adapter: EthersAdapter;
+  private readonly signers: Wallet[];
 
-  constructor(ethersAdapter: EthersAdapter) {
-    this.ethersAdapter = ethersAdapter;
+  constructor(privateKey: `0x${string}`) {
+    this.provider = new ethers.InfuraProvider('sepolia', INFURA_API_KEY);
+    this.adapter = new EthersAdapter({
+      ethers,
+      signerOrProvider: new ethers.Wallet(privateKey, this.provider),
+    });
+    this.signers = privateKeys.map((pk) => new Wallet(pk, this.provider));
   }
 
-  async getSafe(): Promise<Safe> {
-    try {
-      const safeFactory = await SafeFactory.create({
-        ethAdapter: this.ethersAdapter,
-        safeVersion: '1.4.1',
-      });
+  async init(): Promise<void> {
+    const safeFactory = await SafeFactory.create({
+      ethAdapter: this.adapter,
+    });
+    const owners = await Promise.all(
+      this.signers.map(async (s) => s.getAddress()),
+    );
+    const safeAccountConfig: SafeAccountConfig = { owners, threshold: 2 };
+    const safeAddress = await safeFactory.predictSafeAddress(safeAccountConfig);
+    const isDeployed = '0x' !== (await this.provider.getCode(safeAddress));
 
-      const safeAccountConfig: SafeAccountConfig = {
-        owners: [
-          process.env.WALLET_ADDRESS!,
-          process.env.SECOND_WALLET_ADDRESS!,
-          process.env.THIRD_WALLET_ADDRESS!,
-        ],
-        threshold: 2,
-      };
-
-      return await safeFactory.deploySafe({ safeAccountConfig });
-    } catch (err) {
-      throw err; // debugging purposes
+    if (!isDeployed) {
+      await this.deploySafe();
+    } else {
+      console.log(`
+        Your Safe is already deployed:
+        https://sepolia.etherscan.io/address/${safeAddress}
+        https://app.safe.global/sep:${safeAddress}
+    `);
     }
+  }
+
+  private async deploySafe(): Promise<Safe> {
+    const safeFactory = await SafeFactory.create({
+      ethAdapter: this.adapter,
+    });
+    const owners = await Promise.all(
+      this.signers.map(async (s) => s.getAddress()),
+    );
+    const safeAccountConfig: SafeAccountConfig = { owners, threshold: 2 };
+    const safe = await safeFactory.deploySafe({ safeAccountConfig });
+    const safeAddress = await safe.getAddress();
+
+    console.log(`
+      A NEW Safe has been deployed:
+      https://sepolia.etherscan.io/address/${safeAddress}
+      https://app.safe.global/sep:${safeAddress}
+    `);
+
+    return safe;
   }
 }

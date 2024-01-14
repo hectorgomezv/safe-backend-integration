@@ -1,12 +1,12 @@
+import { configuration } from '@/config/configuration';
+import { SafesRepository } from '@/datasources/safes-repository';
 import 'dotenv/config';
-import { getEthersAdapter } from './datasources/ethers-adapter';
-import { SafesRepository } from './datasources/safes-repository';
+
+const { privateKeys } = configuration;
 
 async function main() {
-  const ethersAdapter = await getEthersAdapter();
-  const safesRepository: SafesRepository = new SafesRepository(ethersAdapter);
-  const safe = safesRepository.getSafe();
-  console.log(safe);
+  const repository = new SafesRepository(privateKeys[0]);
+  repository.init();
 }
 
 (() => main())();
