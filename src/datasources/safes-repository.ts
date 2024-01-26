@@ -24,12 +24,8 @@ export class SafesRepository {
   }
 
   async init(): Promise<void> {
-    const safeFactory = await SafeFactory.create({
-      ethAdapter: this.adapter,
-    });
-    const owners = await Promise.all(
-      this.signers.map(async (s) => s.getAddress()),
-    );
+    const safeFactory = await SafeFactory.create({ ethAdapter: this.adapter });
+    const owners = this.signers.map((s) => s.address);
     const safeAccountConfig: SafeAccountConfig = { owners, threshold: 2 };
     const safeAddress = await safeFactory.predictSafeAddress(safeAccountConfig);
     const isDeployed = '0x' !== (await this.provider.getCode(safeAddress));
@@ -43,6 +39,17 @@ export class SafesRepository {
         https://app.safe.global/sep:${safeAddress}
     `);
     }
+  }
+
+  async getSafe(): Promise<Safe> {
+    const safeFactory = await SafeFactory.create({ ethAdapter: this.adapter });
+    const owners = this.signers.map((s) => s.address);
+    const safeAccountConfig: SafeAccountConfig = { owners, threshold: 2 };
+    const safeAddress = await safeFactory.predictSafeAddress(safeAccountConfig);
+    return Safe.create({
+      ethAdapter: this.adapter,
+      safeAddress,
+    });
   }
 
   private async deploySafe(): Promise<Safe> {

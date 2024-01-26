@@ -1,6 +1,9 @@
 import 'dotenv/config';
 
 export const configuration = {
+  clientGateway: {
+    baseUri: 'https://safe-client.staging.5afe.dev',
+  },
   privateKeys: [
     process.env.PRIVATE_KEY as `0x${string}`,
     process.env.SECOND_PRIVATE_KEY as `0x${string}`,

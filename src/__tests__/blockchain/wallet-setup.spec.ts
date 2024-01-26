@@ -24,20 +24,12 @@ describe('Wallet actions', () => {
   const wallets = configuration.privateKeys.map(
     (pk) => new Wallet(pk, provider),
   );
-  const [firstWallet, secondWallet, thirdWallet] = wallets;
 
-  describe('should get the account addresses', () => {
-    it('should get the first account address', async () => {
-      expect(firstWallet.address).toEqual(configuration.walletAddresses[0]);
-    });
-
-    it('should get the second account address', async () => {
-      expect(secondWallet.address).toEqual(configuration.walletAddresses[1]);
-    });
-
-    it('should get the third account address', async () => {
-      expect(thirdWallet.address).toEqual(configuration.walletAddresses[2]);
-    });
+  it('should build wallets from the configured addresses', async () => {
+    const [firstWallet, secondWallet, thirdWallet] = wallets;
+    expect(firstWallet.address).toEqual(configuration.walletAddresses[0]);
+    expect(secondWallet.address).toEqual(configuration.walletAddresses[1]);
+    expect(thirdWallet.address).toEqual(configuration.walletAddresses[2]);
   });
 
   describe('resources allocation', () => {
