@@ -1,10 +1,11 @@
+import { configuration } from '@/config/configuration';
+import { logger } from '@/logging/logger';
 import Safe, {
   EthersAdapter,
   SafeAccountConfig,
   SafeFactory,
 } from '@safe-global/protocol-kit';
 import { Provider, Wallet, ethers } from 'ethers';
-import { configuration } from '@/config/configuration';
 
 const { privateKeys } = configuration;
 const { INFURA_API_KEY } = process.env;
@@ -33,11 +34,10 @@ export class SafesRepository {
     if (!isDeployed) {
       await this.deploySafe();
     } else {
-      console.log(`
-        Your Safe is already deployed:
-        https://sepolia.etherscan.io/address/${safeAddress}
-        https://app.safe.global/sep:${safeAddress}
-    `);
+      logger.info({
+        msg: 'SAFE_ALREADY_DEPLOYED',
+        safeWalletUrl: `https://app.safe.global/sep:${safeAddress}`,
+      });
     }
   }
 
@@ -63,11 +63,10 @@ export class SafesRepository {
     const safe = await safeFactory.deploySafe({ safeAccountConfig });
     const safeAddress = await safe.getAddress();
 
-    console.log(`
-      A NEW Safe has been deployed:
-      https://sepolia.etherscan.io/address/${safeAddress}
-      https://app.safe.global/sep:${safeAddress}
-    `);
+    logger.info({
+      msg: 'SAFE_DEPLOYED',
+      safeWalletUrl: `https://app.safe.global/sep:${safeAddress}`,
+    });
 
     return safe;
   }

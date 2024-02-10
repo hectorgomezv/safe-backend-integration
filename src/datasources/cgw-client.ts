@@ -1,6 +1,18 @@
 import { configuration } from '@/config/configuration';
 import { httpClient } from '@/datasources/axios-http-client';
 
+interface CGWTransaction {
+  type: 'TRANSACTION';
+  transaction: {
+    id: string;
+    timestamp: number;
+    txStatus: string;
+    txInfo: Record<string, unknown>;
+    executionInfo: { nonce: number };
+    safeAppInfo: Record<string, unknown>;
+  };
+}
+
 export class ClientGatewayClient {
   private readonly baseUri: string;
 
@@ -25,5 +37,12 @@ export class ClientGatewayClient {
   }> {
     const { data } = await httpClient.get(`${this.baseUri}/about`);
     return data;
+  }
+
+  async getHistory(safeAddress: string): Promise<CGWTransaction[]> {
+    const { data } = await httpClient.get(
+      `${this.baseUri}/v1/chains/11155111/safes/${safeAddress}/transactions/history`,
+    );
+    return data.results.filter((i) => i.type === 'TRANSACTION');
   }
 }
