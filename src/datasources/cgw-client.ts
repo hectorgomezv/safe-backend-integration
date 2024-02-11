@@ -1,7 +1,7 @@
 import { configuration } from '@/config/configuration';
 import { httpClient } from '@/datasources/axios-http-client';
 
-interface CGWTransaction {
+export interface CGWTransaction {
   type: 'TRANSACTION';
   transaction: {
     id: string;
