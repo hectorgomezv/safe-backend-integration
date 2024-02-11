@@ -13,4 +13,6 @@ async function main() {
   await eoaRepository.equilibrateBalances();
 }
 
+// TODO: execute index before tests execution on CI
+
 (() => main())();

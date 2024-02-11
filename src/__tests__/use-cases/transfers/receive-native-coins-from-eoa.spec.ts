@@ -55,6 +55,8 @@ describe('Transfers: receive native coins from EOA', () => {
     });
     expect(newBalance).toEqual(safeBalance + amount);
     const historyTxs = await cgw.getHistory(safeAddress);
+
+    // TODO: move to a utils function and document this logic
     expect(historyTxs.some((i) => i.transaction.id.endsWith(tx.hash.slice(2))));
   }, 60_000);
 });
