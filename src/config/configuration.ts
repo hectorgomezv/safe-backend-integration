@@ -4,6 +4,9 @@ export const configuration = {
   clientGateway: {
     baseUri: 'https://safe-client.staging.5afe.dev',
   },
+  transactionService: {
+    baseUri: 'https://safe-transaction-sepolia.staging.5afe.dev/api',
+  },
   privateKeys: [
     process.env.PRIVATE_KEY as `0x${string}`,
     process.env.SECOND_PRIVATE_KEY as `0x${string}`,
