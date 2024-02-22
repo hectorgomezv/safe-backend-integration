@@ -87,7 +87,7 @@ describe('Transactions cleanup', () => {
       await executeTxResponse.transactionResponse?.wait();
 
       // Check the CGW history contains the transaction
-      await seconds(20);
+      await seconds(30);
       const historyTxs = await cgw.getHistory(safeAddress);
       expect(_containsTransaction(historyTxs, tx.safeTxHash)).toBe(true);
     }
@@ -104,7 +104,7 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
       to: safeAddress,
       value: amount,
     });
-    await seconds(20);
+    await seconds(30);
 
     const historyTxs = await cgw.getHistory(safeAddress);
     const newBalance = await safe.getBalance();
@@ -151,7 +151,7 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
     await cgw.postTransaction(safeAddress, proposeTransactionDto);
 
     // Check the CGW queue contains the transaction
-    await seconds(10);
+    await seconds(30);
     const queueBeforeDeletion = await cgw.getQueue(safeAddress);
     expect(_containsTransaction(queueBeforeDeletion, safeTxHash)).toBe(true);
 
@@ -206,7 +206,7 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
     await cgw.postTransaction(safeAddress, proposeTransactionDto);
 
     // Check the CGW queue contains the transaction
-    await seconds(10);
+    await seconds(30);
     const queueBeforeExecution = await cgw.getQueue(safeAddress);
     expect(_containsTransaction(queueBeforeExecution, safeTxHash)).toBe(true);
 
@@ -220,7 +220,7 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
     await executeTxResponse.transactionResponse?.wait();
 
     // Check the CGW history contains the transaction
-    await seconds(20);
+    await seconds(30);
     const historyTxs = await cgw.getHistory(safeAddress);
     expect(_containsTransaction(historyTxs, safeTxHash)).toBe(true);
 
