@@ -38,6 +38,10 @@ export interface CGWNoncesResponse {
   recommendedNonce: number;
 }
 
+export interface CGWDeleteTransactionDTO {
+  signature: string;
+}
+
 // TODO: move 11155111 chain id to configuration.
 
 export class ClientGatewayClient {
@@ -111,5 +115,15 @@ export class ClientGatewayClient {
       proposeTransactionDto,
     );
     return data;
+  }
+
+  async deleteTransaction(
+    safeTxHash: string,
+    deleteTransactionDto: CGWDeleteTransactionDTO,
+  ): Promise<void> {
+    await httpClient.delete(
+      `${this.baseUri}/v1/chains/11155111/transactions/${safeTxHash}`,
+      { data: deleteTransactionDto },
+    );
   }
 }

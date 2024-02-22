@@ -1,5 +1,6 @@
 import { configuration } from '@/config/configuration';
 import {
+  CGWDeleteTransactionDTO,
   CGWProposeTransactionDTO,
   CGWTransactionItem,
   ClientGatewayClient,
@@ -72,6 +73,27 @@ beforeAll(async () => {
   cgw = new ClientGatewayClient();
 });
 
+describe('Transactions cleanup', () => {
+  it('should execute pending transactions', async () => {
+    const safeAddress = await safe.getAddress();
+    const pending = await apiKit.getPendingTransactions(safeAddress);
+    for (const tx of pending.results) {
+      const signature = await safe.signTransactionHash(tx.safeTxHash);
+      const signature2 = await safe2.signTransactionHash(tx.safeTxHash);
+      await apiKit.confirmTransaction(tx.safeTxHash, signature.data);
+      await apiKit.confirmTransaction(tx.safeTxHash, signature2.data);
+      const safeTransaction = await apiKit.getTransaction(tx.safeTxHash);
+      const executeTxResponse = await safe.executeTransaction(safeTransaction);
+      await executeTxResponse.transactionResponse?.wait();
+
+      // Check the CGW history contains the transaction
+      await seconds(20);
+      const historyTxs = await cgw.getHistory(safeAddress);
+      expect(_containsTransaction(historyTxs, tx.safeTxHash)).toBe(true);
+    }
+  }, 120_000);
+});
+
 describe('Transfers: receive/send native coins from/to EOA', () => {
   it('should receive an ether transfer and check it is on the CGW history', async () => {
     const safeAddress = await safe.getAddress();
@@ -82,17 +104,68 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
       to: safeAddress,
       value: amount,
     });
-    await seconds(30);
+    await seconds(20);
 
     const historyTxs = await cgw.getHistory(safeAddress);
     const newBalance = await safe.getBalance();
     expect(_containsTransaction(historyTxs, tx.hash)).toBe(true);
     expect(newBalance).toEqual(safeBalance + amount);
-  }, 60_000);
+  });
 
-  it.todo(
-    'should propose an ether transfer, check queue, and delete the proposed transaction',
-  );
+  it.skip('should propose an ether transfer, check queue, and delete the proposed transaction', async () => {
+    const amount = ethers.parseUnits(
+      faker.number
+        .float({ min: 0.00001, max: 0.0001, fractionDigits: 12 })
+        .toString(),
+      'ether',
+    );
+    const txData: MetaTransactionData = {
+      to: configuration.walletAddresses[1],
+      data: '0x',
+      value: amount.toString(),
+    };
+    const tx = await safe.createTransaction({
+      transactions: [txData],
+    });
+    const safeTxHash = await safe.getTransactionHash(tx);
+    const signature = await safe.signTransactionHash(safeTxHash);
+    const safeAddress = await safe.getAddress();
+    const sender = await eoaSigner.getAddress();
+    const { recommendedNonce } = await cgw.getNonces(safeAddress);
+    const proposeTransactionDto: CGWProposeTransactionDTO = {
+      to: tx.data.to,
+      value: tx.data.value,
+      data: tx.data.data,
+      nonce: recommendedNonce.toString(),
+      operation: tx.data.operation,
+      safeTxGas: tx.data.safeTxGas,
+      baseGas: tx.data.baseGas,
+      gasPrice: tx.data.gasPrice,
+      gasToken: tx.data.gasToken,
+      refundReceiver: tx.data.refundReceiver,
+      safeTxHash: safeTxHash,
+      sender: sender,
+      signature: signature.data,
+    };
+
+    await cgw.postTransaction(safeAddress, proposeTransactionDto);
+
+    // Check the CGW queue contains the transaction
+    await seconds(10);
+    const queueBeforeDeletion = await cgw.getQueue(safeAddress);
+    expect(_containsTransaction(queueBeforeDeletion, safeTxHash)).toBe(true);
+
+    // Delete the proposed transaction
+    const deleteTransactionDto: CGWDeleteTransactionDTO = {
+      signature: 'TODO', // TODO: deletion EIP712 data representation should be signed. (see TX service docs)
+    };
+    await cgw.deleteTransaction(safeTxHash, deleteTransactionDto);
+    await seconds(2);
+    const queueAfterDeletion = await cgw.getQueue(safeAddress);
+    expect(_containsTransaction(queueAfterDeletion, safeTxHash)).toBe(false);
+    const history = await cgw.getHistory(safeAddress);
+    expect(_containsTransaction(history, safeTxHash)).toBe(false);
+  });
 
   it('should propose an ether transfer, check queue, sign, execute, and check history', async () => {
     const amount = ethers.parseUnits(
@@ -147,12 +220,12 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
     await executeTxResponse.transactionResponse?.wait();
 
     // Check the CGW history contains the transaction
-    await seconds(10);
+    await seconds(20);
     const historyTxs = await cgw.getHistory(safeAddress);
     expect(_containsTransaction(historyTxs, safeTxHash)).toBe(true);
 
     // Check the CGW queue does not contain the transaction anymore
     const queueAfterExecution = await cgw.getQueue(safeAddress);
     expect(_containsTransaction(queueAfterExecution, safeTxHash)).toBe(false);
-  }, 60_000);
+  });
 });
