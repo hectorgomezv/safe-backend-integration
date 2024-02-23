@@ -1,16 +1,17 @@
+import { seconds } from '@/__tests__/test-utils';
 import { configuration } from '@/config/configuration';
 import {
   CGWDeleteTransactionDTO,
   CGWProposeTransactionDTO,
-  CGWTransactionItem,
   ClientGatewayClient,
-} from '@/datasources/cgw-client';
+} from '@/datasources/cgw/cgw-client';
+import { containsTransaction } from '@/datasources/cgw/cgw-utils';
 import { SafesRepository } from '@/domain/safes/safes-repository';
+import { faker } from '@faker-js/faker';
+import SafeApiKit from '@safe-global/api-kit';
 import Safe from '@safe-global/protocol-kit';
 import { MetaTransactionData } from '@safe-global/safe-core-sdk-types';
 import { TransactionResponse, Wallet, ethers } from 'ethers';
-import { faker } from '@faker-js/faker';
-import SafeApiKit from '@safe-global/api-kit';
 
 let eoaSigner: Wallet;
 let safesRepository: SafesRepository;
@@ -21,40 +22,6 @@ let cgw: ClientGatewayClient;
 let apiKit: SafeApiKit;
 
 const { privateKeys, transactionService } = configuration;
-
-/**
- * Safe Transaction Service ids include transaction hashes as postfix:
- * https://github.com/safe-global/safe-transaction-service/blob/f6d6fe95388620a149b4bc183ed480e54920f5e4/safe_transaction_service/history/serializers.py#L853
- *
- * These transaction hashes don't include hex '0x' prefix, so it's being sliced.
- */
-function _findTransaction(
-  transactions: CGWTransactionItem[],
-  txHash: string,
-): CGWTransactionItem | undefined {
-  return transactions.find((i) => i.transaction.id.endsWith(txHash.slice(2)));
-}
-
-function _containsTransaction(
-  transactions: CGWTransactionItem[],
-  txHash: string,
-): boolean {
-  return !!_findTransaction(transactions, txHash);
-}
-
-/**
- * Stops execution for {@link milliseconds} milliseconds.
- */
-async function milliseconds(milliseconds: number): Promise<void> {
-  await new Promise((_) => setTimeout(_, milliseconds));
-}
-
-/**
- * Stops execution for {@link seconds} seconds.
- */
-async function seconds(seconds: number): Promise<void> {
-  return milliseconds(seconds * 1000);
-}
 
 beforeAll(async () => {
   apiKit = new SafeApiKit({
@@ -87,9 +54,9 @@ describe('Transactions cleanup', () => {
       await executeTxResponse.transactionResponse?.wait();
 
       // Check the CGW history contains the transaction
-      await seconds(30);
+      await seconds(20);
       const historyTxs = await cgw.getHistory(safeAddress);
-      expect(_containsTransaction(historyTxs, tx.safeTxHash)).toBe(true);
+      expect(containsTransaction(historyTxs, tx.safeTxHash)).toBe(true);
     }
   }, 120_000);
 });
@@ -104,11 +71,11 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
       to: safeAddress,
       value: amount,
     });
-    await seconds(30);
+    await seconds(20);
 
     const historyTxs = await cgw.getHistory(safeAddress);
     const newBalance = await safe.getBalance();
-    expect(_containsTransaction(historyTxs, tx.hash)).toBe(true);
+    expect(containsTransaction(historyTxs, tx.hash)).toBe(true);
     expect(newBalance).toEqual(safeBalance + amount);
   });
 
@@ -151,20 +118,19 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
     await cgw.postTransaction(safeAddress, proposeTransactionDto);
 
     // Check the CGW queue contains the transaction
-    await seconds(30);
+    await seconds(20);
     const queueBeforeDeletion = await cgw.getQueue(safeAddress);
-    expect(_containsTransaction(queueBeforeDeletion, safeTxHash)).toBe(true);
+    expect(containsTransaction(queueBeforeDeletion, safeTxHash)).toBe(true);
 
     // Delete the proposed transaction
     const deleteTransactionDto: CGWDeleteTransactionDTO = {
       signature: 'TODO', // TODO: deletion EIP712 data representation should be signed. (see TX service docs)
     };
     await cgw.deleteTransaction(safeTxHash, deleteTransactionDto);
-    await seconds(2);
     const queueAfterDeletion = await cgw.getQueue(safeAddress);
-    expect(_containsTransaction(queueAfterDeletion, safeTxHash)).toBe(false);
+    expect(containsTransaction(queueAfterDeletion, safeTxHash)).toBe(false);
     const history = await cgw.getHistory(safeAddress);
-    expect(_containsTransaction(history, safeTxHash)).toBe(false);
+    expect(containsTransaction(history, safeTxHash)).toBe(false);
   });
 
   it('should propose an ether transfer, check queue, sign, execute, and check history', async () => {
@@ -206,9 +172,9 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
     await cgw.postTransaction(safeAddress, proposeTransactionDto);
 
     // Check the CGW queue contains the transaction
-    await seconds(30);
+    await seconds(20);
     const queueBeforeExecution = await cgw.getQueue(safeAddress);
-    expect(_containsTransaction(queueBeforeExecution, safeTxHash)).toBe(true);
+    expect(containsTransaction(queueBeforeExecution, safeTxHash)).toBe(true);
 
     // Add a second signature
     const secondSignature = await safe2.signTransactionHash(safeTxHash);
@@ -220,12 +186,12 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
     await executeTxResponse.transactionResponse?.wait();
 
     // Check the CGW history contains the transaction
-    await seconds(30);
+    await seconds(20);
     const historyTxs = await cgw.getHistory(safeAddress);
-    expect(_containsTransaction(historyTxs, safeTxHash)).toBe(true);
+    expect(containsTransaction(historyTxs, safeTxHash)).toBe(true);
 
     // Check the CGW queue does not contain the transaction anymore
     const queueAfterExecution = await cgw.getQueue(safeAddress);
-    expect(_containsTransaction(queueAfterExecution, safeTxHash)).toBe(false);
+    expect(containsTransaction(queueAfterExecution, safeTxHash)).toBe(false);
   });
 });
