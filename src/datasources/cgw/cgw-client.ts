@@ -1,5 +1,5 @@
 import { configuration } from '@/config/configuration';
-import { httpClient } from '@/datasources/axios-http-client';
+import { httpClient } from '@/datasources/http/axios-http-client';
 import { SafeSignature } from '@safe-global/safe-core-sdk-types';
 
 export interface CGWTransactionItem {

@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { ClientGatewayClient } from '@/datasources/cgw-client';
+import { ClientGatewayClient } from '@/datasources/cgw/cgw-client';
 import '@/__tests__/matchers/to-be-string-or-null';
 
 describe('CGW status checks', () => {
