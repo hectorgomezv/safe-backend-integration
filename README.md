@@ -31,8 +31,8 @@ This would print 4 log messages in JSON format indicating the outcome of the exe
 
 - Check if a Safe is deployed for the given signer addresses setup. i.e.: it would check the on-chain data to see whether a 2/3 Safe with with the provided signer addresses as signers exist on the Sepolia chain.
 
-  - If a Safe exists, it will print a `SAFE_ALREADY_DEPLOYED` message, and a link to https://app.safe.global/:safeAddress
-  - If it doesn't exist, it would deploy a new Safe with the provided configuration, and it will print a `SAFE_DEPLOYED` message with the link to https://app.safe.global/:safeAddress
+  - If a Safe exists, it will print a `SAFE_ALREADY_DEPLOYED` message, and a link to Safe Wallet Web.
+  - If it doesn't exist, it would deploy a new Safe with the provided configuration, and it will print a `SAFE_DEPLOYED` message with the link to Safe Wallet Web.
 
 - Check the ETH balances of the provided signer addresses in Sepolia.
 
