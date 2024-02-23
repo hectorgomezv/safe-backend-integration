@@ -36,7 +36,7 @@ export class SafesRepository {
     } else {
       logger.info({
         msg: 'SAFE_ALREADY_DEPLOYED',
-        safeWalletUrl: `https://app.safe.global/sep:${safeAddress}`,
+        safeWalletUrl: `https://safe-wallet-web.dev.5afe.dev/sep:${safeAddress}`,
       });
     }
   }
@@ -65,7 +65,7 @@ export class SafesRepository {
 
     logger.info({
       msg: 'SAFE_DEPLOYED',
-      safeWalletUrl: `https://app.safe.global/sep:${safeAddress}`,
+      safeWalletUrl: `https://safe-wallet-web.dev.5afe.dev/sep:${safeAddress}`,
     });
 
     return safe;
