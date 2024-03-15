@@ -14,6 +14,7 @@ export class SafesRepository {
   private readonly provider: Provider;
   private readonly adapter: EthersAdapter;
   private readonly signers: Wallet[];
+  private readonly safeFactory: SafeFactory;
 
   constructor(privateKey: `0x${string}`) {
     this.provider = new ethers.InfuraProvider('sepolia', INFURA_API_KEY);
@@ -25,10 +26,7 @@ export class SafesRepository {
   }
 
   async init(): Promise<void> {
-    const safeFactory = await SafeFactory.create({ ethAdapter: this.adapter });
-    const owners = this.signers.map((s) => s.address);
-    const safeAccountConfig: SafeAccountConfig = { owners, threshold: 2 };
-    const safeAddress = await safeFactory.predictSafeAddress(safeAccountConfig);
+    const safeAddress = await this.getSafeAddress();
     const isDeployed = '0x' !== (await this.provider.getCode(safeAddress));
 
     if (!isDeployed) {
@@ -41,25 +39,28 @@ export class SafesRepository {
     }
   }
 
-  async getSafe(): Promise<Safe> {
-    const safeFactory = await SafeFactory.create({ ethAdapter: this.adapter });
-    const owners = this.signers.map((s) => s.address);
-    const safeAccountConfig: SafeAccountConfig = { owners, threshold: 2 };
-    const safeAddress = await safeFactory.predictSafeAddress(safeAccountConfig);
+  async getSdkInstance(): Promise<Safe> {
+    const safeAddress = await this.getSafeAddress();
     return Safe.create({
       ethAdapter: this.adapter,
       safeAddress,
     });
   }
 
+  private getSafeAccountConfig(): SafeAccountConfig {
+    const owners = this.signers.map((s) => s.address);
+    return { owners, threshold: 2 };
+  }
+
+  private async getSafeAddress(): Promise<string> {
+    const safeAccountConfig = this.getSafeAccountConfig();
+    const safeFactory = await SafeFactory.create({ ethAdapter: this.adapter });
+    return safeFactory.predictSafeAddress(safeAccountConfig);
+  }
+
   private async deploySafe(): Promise<Safe> {
-    const safeFactory = await SafeFactory.create({
-      ethAdapter: this.adapter,
-    });
-    const owners = await Promise.all(
-      this.signers.map(async (s) => s.getAddress()),
-    );
-    const safeAccountConfig: SafeAccountConfig = { owners, threshold: 2 };
+    const safeAccountConfig = this.getSafeAccountConfig();
+    const safeFactory = await SafeFactory.create({ ethAdapter: this.adapter });
     const safe = await safeFactory.deploySafe({ safeAccountConfig });
     const safeAddress = await safe.getAddress();
 

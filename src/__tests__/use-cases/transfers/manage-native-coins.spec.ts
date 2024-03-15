@@ -16,8 +16,8 @@ import { TransactionResponse, Wallet, ethers } from 'ethers';
 let eoaSigner: Wallet;
 let safesRepository: SafesRepository;
 let safesRepository2: SafesRepository;
-let safe: Safe;
-let safe2: Safe;
+let sdkInstance: Safe;
+let secondSdkInstance: Safe;
 let cgw: ClientGatewayClient;
 let apiKit: SafeApiKit;
 
@@ -35,22 +35,25 @@ beforeAll(async () => {
 
   safesRepository = new SafesRepository(privateKeys[0]);
   safesRepository2 = new SafesRepository(privateKeys[1]);
-  safe = await safesRepository.getSafe();
-  safe2 = await safesRepository2.getSafe();
+  sdkInstance = await safesRepository.getSdkInstance();
+  secondSdkInstance = await safesRepository2.getSdkInstance();
   cgw = new ClientGatewayClient();
 });
 
 describe('Transactions cleanup', () => {
   it('should execute pending transactions', async () => {
-    const safeAddress = await safe.getAddress();
+    const safeAddress = await sdkInstance.getAddress();
     const pending = await apiKit.getPendingTransactions(safeAddress);
     for (const tx of pending.results) {
-      const signature = await safe.signTransactionHash(tx.safeTxHash);
-      const signature2 = await safe2.signTransactionHash(tx.safeTxHash);
+      const signature = await sdkInstance.signTransactionHash(tx.safeTxHash);
+      const signature2 = await secondSdkInstance.signTransactionHash(
+        tx.safeTxHash,
+      );
       await apiKit.confirmTransaction(tx.safeTxHash, signature.data);
       await apiKit.confirmTransaction(tx.safeTxHash, signature2.data);
       const safeTransaction = await apiKit.getTransaction(tx.safeTxHash);
-      const executeTxResponse = await safe.executeTransaction(safeTransaction);
+      const executeTxResponse =
+        await sdkInstance.executeTransaction(safeTransaction);
       await executeTxResponse.transactionResponse?.wait();
 
       // Check the CGW history contains the transaction
@@ -63,8 +66,8 @@ describe('Transactions cleanup', () => {
 
 describe('Transfers: receive/send native coins from/to EOA', () => {
   it('should receive an ether transfer and check it is on the CGW history', async () => {
-    const safeAddress = await safe.getAddress();
-    const safeBalance = await safe.getBalance();
+    const safeAddress = await sdkInstance.getAddress();
+    const safeBalance = await sdkInstance.getBalance();
     const amount = ethers.parseUnits('0.0001', 'ether');
 
     const tx: TransactionResponse = await eoaSigner.sendTransaction({
@@ -74,7 +77,7 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
     await seconds(30);
 
     const historyTxs = await cgw.getHistory(safeAddress);
-    const newBalance = await safe.getBalance();
+    const newBalance = await sdkInstance.getBalance();
     expect(containsTransaction(historyTxs, tx.hash)).toBe(true);
     expect(newBalance).toEqual(safeBalance + amount);
   });
@@ -91,12 +94,12 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
       data: '0x',
       value: amount.toString(),
     };
-    const tx = await safe.createTransaction({
+    const tx = await sdkInstance.createTransaction({
       transactions: [txData],
     });
-    const safeTxHash = await safe.getTransactionHash(tx);
-    const signature = await safe.signTransactionHash(safeTxHash);
-    const safeAddress = await safe.getAddress();
+    const safeTxHash = await sdkInstance.getTransactionHash(tx);
+    const signature = await sdkInstance.signTransactionHash(safeTxHash);
+    const safeAddress = await sdkInstance.getAddress();
     const sender = await eoaSigner.getAddress();
     const { recommendedNonce } = await cgw.getNonces(safeAddress);
     const proposeTransactionDto: CGWProposeTransactionDTO = {
@@ -145,12 +148,12 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
       data: '0x',
       value: amount.toString(),
     };
-    const tx = await safe.createTransaction({
+    const tx = await sdkInstance.createTransaction({
       transactions: [txData],
     });
-    const safeTxHash = await safe.getTransactionHash(tx);
-    const firstSignature = await safe.signTransactionHash(safeTxHash);
-    const safeAddress = await safe.getAddress();
+    const safeTxHash = await sdkInstance.getTransactionHash(tx);
+    const firstSignature = await sdkInstance.signTransactionHash(safeTxHash);
+    const safeAddress = await sdkInstance.getAddress();
     const sender = await eoaSigner.getAddress();
     const { recommendedNonce } = await cgw.getNonces(safeAddress);
     const proposeTransactionDto: CGWProposeTransactionDTO = {
@@ -177,12 +180,14 @@ describe('Transfers: receive/send native coins from/to EOA', () => {
     expect(containsTransaction(queueBeforeExecution, safeTxHash)).toBe(true);
 
     // Add a second signature
-    const secondSignature = await safe2.signTransactionHash(safeTxHash);
+    const secondSignature =
+      await secondSdkInstance.signTransactionHash(safeTxHash);
     await cgw.postConfirmation(safeTxHash, secondSignature);
 
     // Execute the transaction
     const safeTransaction = await apiKit.getTransaction(safeTxHash);
-    const executeTxResponse = await safe.executeTransaction(safeTransaction);
+    const executeTxResponse =
+      await sdkInstance.executeTransaction(safeTransaction);
     await executeTxResponse.transactionResponse?.wait();
 
     // Check the CGW history contains the transaction
