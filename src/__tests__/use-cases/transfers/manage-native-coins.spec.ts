@@ -14,8 +14,6 @@ import { MetaTransactionData } from '@safe-global/safe-core-sdk-types';
 import { TransactionResponse, Wallet, ethers } from 'ethers';
 
 let eoaSigner: Wallet;
-let safesRepository: SafesRepository;
-let safesRepository2: SafesRepository;
 let sdkInstance: Safe;
 let secondSdkInstance: Safe;
 let cgw: ClientGatewayClient;
@@ -33,10 +31,10 @@ beforeAll(async () => {
     new ethers.InfuraProvider('sepolia', process.env.INFURA_API_KEY),
   );
 
-  safesRepository = new SafesRepository(privateKeys[0]);
-  safesRepository2 = new SafesRepository(privateKeys[1]);
-  sdkInstance = await safesRepository.getSdkInstance();
-  secondSdkInstance = await safesRepository2.getSdkInstance();
+  sdkInstance = await new SafesRepository(privateKeys[0]).getSdkInstance();
+  secondSdkInstance = await new SafesRepository(
+    privateKeys[1],
+  ).getSdkInstance();
   cgw = new ClientGatewayClient();
 });
 
